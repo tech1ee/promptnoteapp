@@ -1,0 +1,52 @@
+name: prompt_note_app
+description: A prompt creation note app that combines prompt generation with note-taking tools.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ">=2.17.0 <3.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  
+  # Firebase
+  firebase_core: ^2.15.1
+  firebase_auth: ^4.9.0
+  firebase_database: ^10.2.5
+  cloud_firestore: ^4.9.1
+  
+  # Authentication
+  google_sign_in: ^6.1.5
+  
+  # State Management
+  provider: ^6.0.5
+  
+  # Local Storage
+  sqflite: ^2.3.0
+  path_provider: ^2.1.1
+  path: ^1.8.3
+  
+  # UI Components
+  flutter_markdown: ^0.6.17
+  cupertino_icons: ^1.0.6
+  
+  # In-App Purchases
+  in_app_purchase: ^3.1.8
+  
+  # Internationalization
+  intl: ^0.18.1
+  
+  # UUID
+  uuid: ^3.0.7
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.3
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/ 
