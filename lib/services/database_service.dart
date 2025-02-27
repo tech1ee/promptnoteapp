@@ -1,6 +1,6 @@
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'package:prompt_note_app/models/note_model.dart';
+import 'package:prompt_note_app/models/dataset_model.dart';
 import 'package:prompt_note_app/models/user_model.dart';
 import 'package:prompt_note_app/services/auth_service.dart';
 
@@ -10,7 +10,7 @@ class DatabaseService with ChangeNotifier {
   final FirebaseDatabase _database = FirebaseDatabase.instance;
   
   // Mock data for development
-  final List<NoteModel> _mockNotes = [];
+  final List<DatasetModel> _mockDatasets = [];
   
   DatabaseService({required this.authService, this.mockMode = false}) {
     if (mockMode) {
@@ -19,17 +19,17 @@ class DatabaseService with ChangeNotifier {
   }
   
   void _setupMockData() {
-    // Add some sample notes for testing
-    _mockNotes.addAll([
-      NoteModel(
+    // Add some sample datasets for testing
+    _mockDatasets.addAll([
+      DatasetModel(
         id: 1,
-        title: 'Welcome to Prompt Notes',
-        content: 'This is a sample note to help you get started.',
+        title: 'Welcome to Prompt Datasets',
+        content: 'This is a sample dataset to help you get started.',
         lastUpdated: DateTime.now().millisecondsSinceEpoch,
         userId: 'mock-user-123',
         tags: ['welcome', 'getting-started'],
       ),
-      NoteModel(
+      DatasetModel(
         id: 2,
         title: 'Ideas for my novel',
         content: 'Main character should have a mysterious background...',
@@ -40,24 +40,24 @@ class DatabaseService with ChangeNotifier {
     ]);
   }
   
-  // Save note (mock implementation)
-  Future<String> saveNoteMock(NoteModel note) async {
+  // Save dataset (mock implementation)
+  Future<String> saveDatasetMock(DatasetModel dataset) async {
     await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
     
-    // If updating existing note
-    if (note.id != null) {
-      final index = _mockNotes.indexWhere((n) => n.id == note.id);
+    // If updating existing dataset
+    if (dataset.id != null) {
+      final index = _mockDatasets.indexWhere((d) => d.id == dataset.id);
       if (index >= 0) {
-        _mockNotes[index] = note;
+        _mockDatasets[index] = dataset;
       }
     } else {
-      // Create new note with mock ID
-      final newId = _mockNotes.isEmpty ? 1 : (_mockNotes.map((n) => n.id ?? 0).reduce((a, b) => a > b ? a : b) + 1);
-      final newNote = note.copyWith(
+      // Create new dataset with mock ID
+      final newId = _mockDatasets.isEmpty ? 1 : (_mockDatasets.map((d) => d.id ?? 0).reduce((a, b) => a > b ? a : b) + 1);
+      final newDataset = dataset.copyWith(
         id: newId,
         firebaseId: 'mock-firebase-id-$newId',
       );
-      _mockNotes.add(newNote);
+      _mockDatasets.add(newDataset);
     }
     
     notifyListeners();
@@ -72,44 +72,44 @@ class DatabaseService with ChangeNotifier {
   DatabaseReference get _currentUserRef => 
       _usersRef.child(authService.currentUser?.uid ?? '');
   
-  // Reference to notes collection
-  DatabaseReference get _notesRef => _database.ref().child('notes');
+  // Reference to datasets collection
+  DatabaseReference get _datasetsRef => _database.ref().child('datasets');
   
-  // Reference to current user's notes
-  DatabaseReference get _currentUserNotesRef => 
-      _notesRef.child(authService.currentUser?.uid ?? '');
+  // Reference to current user's datasets
+  DatabaseReference get _currentUserDatasetsRef => 
+      _datasetsRef.child(authService.currentUser?.uid ?? '');
   
-  // Save note to Firebase (for premium users)
-  Future<String> saveNote(NoteModel note) async {
+  // Save dataset to Firebase (for premium users)
+  Future<String> saveDataset(DatasetModel dataset) async {
     if (mockMode) {
-      return saveNoteMock(note);
+      return saveDatasetMock(dataset);
     }
     
     try {
-      DatabaseReference noteRef;
+      DatabaseReference datasetRef;
       
-      if (note.firebaseId != null) {
-        // Update existing note
-        noteRef = _currentUserNotesRef.child(note.firebaseId!);
-        await noteRef.update(note.toJson());
+      if (dataset.firebaseId != null) {
+        // Update existing dataset
+        datasetRef = _currentUserDatasetsRef.child(dataset.firebaseId!);
+        await datasetRef.update(dataset.toJson());
       } else {
-        // Create new note
-        noteRef = _currentUserNotesRef.push();
-        final firebaseId = noteRef.key;
-        await noteRef.set(note.copyWith(firebaseId: firebaseId).toJson());
+        // Create new dataset
+        datasetRef = _currentUserDatasetsRef.push();
+        final firebaseId = datasetRef.key;
+        await datasetRef.set(dataset.copyWith(firebaseId: firebaseId).toJson());
       }
       
       notifyListeners();
-      return noteRef.key!;
+      return datasetRef.key!;
     } catch (e) {
       rethrow;
     }
   }
   
-  // Get mock notes
-  Future<List<NoteModel>> getMockNotes() async {
+  // Get mock datasets
+  Future<List<DatasetModel>> getMockDatasets() async {
     await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
-    return _mockNotes.where((note) => note.userId == authService.user?.uid).toList();
+    return _mockDatasets.where((dataset) => dataset.userId == authService.user?.uid).toList();
   }
   
   // Create or update user data
@@ -145,5 +145,5 @@ class DatabaseService with ChangeNotifier {
     }
   }
   
-  // ... additional methods for handling prompts usage and fetching notes
+  // ... additional methods for handling prompts usage and fetching datasets
 } 

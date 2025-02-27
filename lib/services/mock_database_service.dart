@@ -1,26 +1,26 @@
 import 'package:flutter/material.dart';
-import 'package:prompt_note_app/models/note_model.dart';
+import 'package:prompt_note_app/models/dataset_model.dart';
 import 'package:prompt_note_app/models/user_model.dart';
 
 class MockDatabaseService with ChangeNotifier {
-  final List<NoteModel> _mockNotes = [];
+  final List<DatasetModel> _mockDatasets = [];
   
   MockDatabaseService() {
     _setupMockData();
   }
   
   void _setupMockData() {
-    // Add some sample notes for testing
-    _mockNotes.addAll([
-      NoteModel(
+    // Add some sample datasets for testing
+    _mockDatasets.addAll([
+      DatasetModel(
         id: 1,
-        title: 'Welcome to Prompt Notes',
-        content: 'This is a sample note to help you get started.',
+        title: 'Welcome to Prompt Datasets',
+        content: 'This is a sample dataset to help you get started.',
         lastUpdated: DateTime.now().millisecondsSinceEpoch,
         userId: 'mock-user-123',
         tags: ['welcome', 'getting-started'],
       ),
-      NoteModel(
+      DatasetModel(
         id: 2,
         title: 'Ideas for my novel',
         content: 'Main character should have a mysterious background...',
@@ -31,32 +31,32 @@ class MockDatabaseService with ChangeNotifier {
     ]);
   }
   
-  Future<String> saveNote(NoteModel note) async {
+  Future<String> saveDataset(DatasetModel dataset) async {
     await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
     
-    // If updating existing note
-    if (note.id != null) {
-      final index = _mockNotes.indexWhere((n) => n.id == note.id);
+    // If updating existing dataset
+    if (dataset.id != null) {
+      final index = _mockDatasets.indexWhere((d) => d.id == dataset.id);
       if (index >= 0) {
-        _mockNotes[index] = note;
+        _mockDatasets[index] = dataset;
       }
     } else {
-      // Create new note with mock ID
-      final newId = _mockNotes.isEmpty ? 1 : (_mockNotes.map((n) => n.id ?? 0).reduce((a, b) => a > b ? a : b) + 1);
-      final newNote = note.copyWith(
+      // Create new dataset with mock ID
+      final newId = _mockDatasets.isEmpty ? 1 : (_mockDatasets.map((d) => d.id ?? 0).reduce((a, b) => a > b ? a : b) + 1);
+      final newDataset = dataset.copyWith(
         id: newId,
         firebaseId: 'mock-firebase-id-$newId',
       );
-      _mockNotes.add(newNote);
+      _mockDatasets.add(newDataset);
     }
     
     notifyListeners();
     return 'mock-firebase-id';
   }
   
-  Future<List<NoteModel>> getNotes(String userId) async {
+  Future<List<DatasetModel>> getDatasets(String userId) async {
     await Future.delayed(const Duration(milliseconds: 500)); // Simulate network delay
-    return _mockNotes.where((note) => note.userId == userId).toList();
+    return _mockDatasets.where((dataset) => dataset.userId == userId).toList();
   }
   
   Future<void> updateUserData(UserModel user) async {

@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:prompt_note_app/models/note_model.dart';
+import 'package:prompt_note_app/models/dataset_model.dart';
 import 'package:intl/intl.dart';
 
-class NoteCard extends StatelessWidget {
-  final NoteModel note;
+class DatasetCard extends StatelessWidget {
+  final DatasetModel dataset;
   final VoidCallback onTap;
 
-  const NoteCard({
+  const DatasetCard({
     Key? key,
-    required this.note,
+    required this.dataset,
     required this.onTap,
   }) : super(key: key);
 
@@ -30,7 +30,7 @@ class NoteCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                note.title,
+                dataset.title,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -40,7 +40,7 @@ class NoteCard extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                note.content,
+                dataset.content,
                 style: const TextStyle(fontSize: 14),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -49,12 +49,12 @@ class NoteCard extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (note.tags.isNotEmpty)
+                  if (dataset.tags.isNotEmpty)
                     Expanded(
                       child: Wrap(
                         spacing: 4,
                         runSpacing: 4,
-                        children: note.tags.map((tag) {
+                        children: dataset.tags.map((tag) {
                           return Chip(
                             label: Text(
                               tag,
@@ -68,7 +68,7 @@ class NoteCard extends StatelessWidget {
                       ),
                     ),
                   Text(
-                    _formatDate(note.lastUpdated),
+                    _formatDate(dataset.lastUpdated),
                     style: TextStyle(
                       fontSize: 12,
                       color: Colors.grey[600],

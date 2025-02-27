@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:prompt_note_app/features/auth/screens/login_screen.dart';
-import 'package:prompt_note_app/features/notes/screens/home_screen.dart';
+import 'package:prompt_note_app/features/datasets/screens/home_screen.dart';
 import 'package:prompt_note_app/services/mock_auth_service.dart';
 import 'package:prompt_note_app/features/prompts/screens/prompt_generator_screen.dart';
 import 'package:prompt_note_app/features/settings/screens/settings_screen.dart';
@@ -52,7 +52,7 @@ class _AppHomeState extends State<AppHome> {
         items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.note),
-            label: 'Notes',
+            label: 'Datasets',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.lightbulb_outline),

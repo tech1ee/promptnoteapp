@@ -5,7 +5,8 @@ enum BlockType {
   text,
   variable,
   conditional,
-  template
+  template,
+  dataset
 }
 
 class PromptBlockModel {
@@ -65,6 +66,17 @@ class PromptBlockModel {
       type: BlockType.template,
       content: templateName,
       parameters: templateParams,
+    );
+  }
+
+  factory PromptBlockModel.dataset(int datasetId, String datasetTitle) {
+    return PromptBlockModel(
+      type: BlockType.dataset,
+      content: '',
+      parameters: {
+        'datasetId': datasetId,
+        'datasetTitle': datasetTitle,
+      },
     );
   }
 

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:prompt_note_app/models/prompt_block_model.dart';
+import 'package:prompt_note_app/models/dataset_model.dart';
 import 'package:prompt_note_app/features/prompts/widgets/simple_prompt_block_widget.dart';
+import 'package:prompt_note_app/services/mock_storage_service.dart';
+import 'package:provider/provider.dart';
 
 class PromptEditorScreen extends StatefulWidget {
   final List<PromptBlockModel>? initialBlocks;
@@ -23,6 +26,7 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
   bool _isDirty = false;
   Set<String> _collapsedBlocks = {};
   final FocusNode _titleFocusNode = FocusNode();
+  bool _isAddingBlock = false;
 
   @override
   void initState() {
@@ -45,11 +49,58 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
     super.dispose();
   }
 
-  void _addBlock() {
+  void _addTextBlock() {
     setState(() {
       _blocks.add(PromptBlockModel.text(''));
       _isDirty = true;
+      _isAddingBlock = false;
     });
+  }
+  
+  Future<void> _addDatasetBlock() async {
+    final storageService = Provider.of<MockStorageService>(context, listen: false);
+    final datasets = await storageService.getAllDatasets();
+    
+    if (!mounted) return;
+    
+    if (datasets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('No datasets available. Create a dataset first.'),
+        )
+      );
+      return;
+    }
+    
+    final DatasetModel? selected = await showDialog<DatasetModel>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Dataset'),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: datasets.length,
+            itemBuilder: (context, index) {
+              final dataset = datasets[index];
+              return ListTile(
+                title: Text(dataset.title),
+                subtitle: Text('${dataset.items.length} items'),
+                onTap: () => Navigator.pop(context, dataset),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+    
+    if (selected != null && selected.id != null) {
+      setState(() {
+        _blocks.add(PromptBlockModel.dataset(selected.id!, selected.title));
+        _isDirty = true;
+        _isAddingBlock = false;
+      });
+    }
   }
 
   void _removeBlock(int index) {
@@ -108,15 +159,64 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
     StringBuffer prompt = StringBuffer();
     
     for (final block in _blocks) {
-      prompt.write(block.content);
+      if (block.type == BlockType.dataset) {
+        // For dataset blocks, we need to fetch the actual dataset
+        final datasetId = block.parameters?['datasetId'] as int?;
+        final datasetTitle = block.parameters?['datasetTitle'] as String? ?? 'Dataset';
+        
+        // In a real app, you'd fetch the dataset here and include its content
+        // For now, we'll just include a placeholder
+        prompt.write('[Dataset: $datasetTitle]');
+      } else {
+        prompt.write(block.content);
+      }
       prompt.write(' ');
     }
     
     return prompt.toString().trim();
   }
-
-  void _copyPromptToClipboard() {
-    final prompt = _generatePrompt();
+  
+  Future<String> _generatePromptWithDatasets() async {
+    StringBuffer prompt = StringBuffer();
+    final storageService = Provider.of<MockStorageService>(context, listen: false);
+    
+    for (final block in _blocks) {
+      if (block.type == BlockType.dataset) {
+        final datasetId = block.parameters?['datasetId'] as int?;
+        
+        if (datasetId != null) {
+          try {
+            final dataset = await storageService.getDataset(datasetId);
+            if (dataset != null) {
+              // Include all enabled dataset items with prefix/suffix
+              final enabledItems = dataset.items.where((item) => !item.disabled).toList();
+              
+              if (enabledItems.isEmpty) {
+                prompt.write('[No enabled items in dataset: ${dataset.title}]\n');
+              } else {
+                for (final item in enabledItems) {
+                  prompt.write('${dataset.prefix}${item.content}${dataset.suffix}\n');
+                }
+              }
+            } else {
+              prompt.write('[Dataset not found]\n');
+            }
+          } catch (e) {
+            prompt.write('[Error loading dataset]\n');
+          }
+        } else {
+          prompt.write('[Invalid dataset reference]\n');
+        }
+      } else {
+        prompt.write('${block.content}\n');
+      }
+    }
+    
+    return prompt.toString().trim();
+  }
+  
+  void _copyPromptToClipboard() async {
+    final prompt = await _generatePromptWithDatasets();
     Clipboard.setData(ClipboardData(text: prompt)).then((_) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -126,14 +226,17 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
       );
     });
   }
-
-  void _savePrompt() {
+  
+  void _savePrompt() async {
     if (_isDirty) {
+      final promptText = await _generatePromptWithDatasets();
       Navigator.pop(context, {
         'title': _titleController.text,
         'blocks': _blocks,
-        'prompt': _generatePrompt(),
+        'prompt': promptText,
       });
+    } else {
+      Navigator.pop(context);
     }
   }
 
@@ -155,11 +258,19 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
           ),
         ],
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            _isAddingBlock = true;
+          });
+        },
+        child: const Icon(Icons.add),
+      ),
+      body: Column(
         children: [
+          // Title section
           Padding(
-            padding: const EdgeInsets.only(bottom: 16.0, left: 4.0, right: 4.0),
+            padding: const EdgeInsets.all(16.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -190,45 +301,151 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
                     });
                   },
                 ),
-                const Divider(),
               ],
             ),
           ),
           
-          ...List.generate(_blocks.length, (index) {
-            final block = _blocks[index];
-            final isCollapsed = _collapsedBlocks.contains(block.id);
-            
-            return SimplePromptBlockWidget(
-              key: ValueKey(block.id),
-              block: block,
-              isCollapsed: isCollapsed,
-              onToggleCollapse: (collapsed) => _toggleBlockCollapse(index, collapsed),
-              onUpdate: (updatedBlock) => _updateBlock(index, updatedBlock),
-              onRemove: () => _removeBlock(index),
-              onAddVariation: () => _addVariation(index),
-            );
-          }),
+          const Divider(height: 1),
           
-          Padding(
-            padding: const EdgeInsets.only(top: 8.0, left: 4.0),
-            child: InkWell(
-              onTap: _addBlock,
-              child: Row(
+          // Blocks section header
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              border: Border(
+                bottom: BorderSide(
+                  color: Colors.grey[200]!,
+                  width: 1,
+                ),
+              ),
+            ),
+            child: Row(
+              children: [
+                Text(
+                  'Prompt Blocks (${_blocks.length})',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Blocks list
+          Expanded(
+            child: _blocks.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.text_fields,
+                        size: 48,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'No blocks yet\nTap + to add your first block',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 16,
+                        ),
+                      ),
+                    ],
+                  ),
+                )
+              : ReorderableListView.builder(
+                  padding: EdgeInsets.zero,
+                  buildDefaultDragHandles: false,
+                  onReorder: (oldIndex, newIndex) {
+                    setState(() {
+                      if (oldIndex < newIndex) {
+                        newIndex -= 1;
+                      }
+                      final block = _blocks.removeAt(oldIndex);
+                      _blocks.insert(newIndex, block);
+                      _isDirty = true;
+                    });
+                  },
+                  itemCount: _blocks.length,
+                  itemBuilder: (context, index) {
+                    final block = _blocks[index];
+                    final isCollapsed = _collapsedBlocks.contains(block.id);
+                    
+                    return SimplePromptBlockWidget(
+                      key: ValueKey(block.id),
+                      block: block,
+                      index: index,
+                      isCollapsed: isCollapsed,
+                      onToggleCollapse: (collapsed) => _toggleBlockCollapse(index, collapsed),
+                      onUpdate: (updatedBlock) => _updateBlock(index, updatedBlock),
+                      onRemove: () => _removeBlock(index),
+                      onAddVariation: () => _addVariation(index),
+                    );
+                  },
+                ),
+          ),
+          
+          // Add block menu
+          if (_isAddingBlock)
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border(
+                  top: BorderSide(color: Colors.grey[300]!),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.1),
+                    blurRadius: 4,
+                    offset: const Offset(0, -2),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.add, size: 18, color: Colors.grey),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Add block...',
-                    style: TextStyle(
-                      color: Colors.grey[600],
-                      fontSize: 15,
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.text_fields, color: Colors.blue),
                     ),
+                    title: const Text('Text Block'),
+                    subtitle: const Text('Add simple text to your prompt'),
+                    onTap: () {
+                      _addTextBlock();
+                      setState(() {
+                        _isAddingBlock = false;
+                      });
+                    },
+                  ),
+                  ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.green.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: const Icon(Icons.data_array, color: Colors.green),
+                    ),
+                    title: const Text('Dataset Block'),
+                    subtitle: const Text('Insert items from a dataset'),
+                    onTap: () {
+                      _addDatasetBlock();
+                      setState(() {
+                        _isAddingBlock = false;
+                      });
+                    },
                   ),
                 ],
               ),
             ),
-          ),
         ],
       ),
     );

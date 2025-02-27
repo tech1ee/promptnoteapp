@@ -110,3 +110,34 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 4. Start writing based on the prompt!
 
 ## 🏗️ Project Structure
+ib/
+├── app.dart # Main app configuration
+├── main.dart # Entry point
+├── models/ # Data models
+├── features/
+│ ├── notes/ # Notes feature components
+│ │ ├── screens/ # Note screens (list, editor)
+│ │ └── widgets/ # Note-specific widgets
+│ ├── prompts/ # Prompts feature components
+│ │ ├── screens/ # Prompt screens (list, editor)
+│ │ └── widgets/ # Prompt-specific widgets
+│ └── settings/ # Settings feature
+├── services/ # App services (auth, storage, etc.)
+└── utils/ # Utility functions and helpers
+
+
+## 🛠️ Technologies Used
+- Flutter
+- Provider for state management
+- Mock services for demonstration (can be replaced with real backend)
+
+## 🤝 Contributing
+Contributions are welcome! Feel free to submit issues and pull requests.
+
+## 📄 License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🙏 Acknowledgements
+- [Flutter](https://flutter.dev/) for the amazing framework
+- [Provider](https://pub.dev/packages/provider) for state management
+- All the contributors who helped shape this app
