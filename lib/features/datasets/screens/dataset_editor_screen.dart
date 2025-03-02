@@ -255,17 +255,18 @@ class _DatasetEditorScreenState extends State<DatasetEditorScreen> {
         ),
         actions: [
           IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () {
+              _addNewItem('New item');
+            },
+            tooltip: 'Add Item',
+          ),
+          IconButton(
             icon: const Icon(Icons.save),
             onPressed: _saveDataset,
             tooltip: 'Save Dataset',
           ),
         ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          _addNewItem('New item');
-        },
-        child: const Icon(Icons.add),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -416,6 +417,16 @@ class _DatasetEditorScreenState extends State<DatasetEditorScreen> {
                     fontWeight: FontWeight.w500,
                   ),
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.add, size: 20),
+                onPressed: () {
+                  _addNewItem('New item');
+                },
+                tooltip: 'Add Item',
+                constraints: const BoxConstraints(),
+                padding: const EdgeInsets.all(8),
+                visualDensity: VisualDensity.compact,
               ),
             ],
           ),

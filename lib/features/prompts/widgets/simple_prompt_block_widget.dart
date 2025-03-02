@@ -32,11 +32,13 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
   late TextEditingController _textController;
   DatasetModel? _dataset;
   bool _isLoadingDataset = false;
+  bool _isEnabled = true;
 
   @override
   void initState() {
     super.initState();
     _textController = TextEditingController(text: widget.block.content);
+    _isEnabled = !(widget.block.parameters?['disabled'] ?? false);
     
     // Load dataset if this is a dataset block
     if (widget.block.type == BlockType.dataset) {
@@ -64,6 +66,9 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
         oldWidget.block.parameters?['datasetId'] != widget.block.parameters?['datasetId']) {
       _loadDataset();
     }
+    
+    // Update enabled state
+    _isEnabled = !(widget.block.parameters?['disabled'] ?? false);
   }
   
   Future<void> _loadDataset() async {
@@ -159,7 +164,7 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
     return Container(
       margin: const EdgeInsets.only(bottom: 1.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: _isEnabled ? Colors.white : Colors.grey[50],
         border: Border(
           bottom: BorderSide(
             color: Colors.grey[200]!,
@@ -186,7 +191,7 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
                 child: Icon(
                   blockIcon,
                   size: 18,
-                  color: blockColor,
+                  color: _isEnabled ? blockColor : Colors.grey,
                 ),
               ),
               // Content
@@ -196,9 +201,10 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
                   children: [
                     Text(
                       'Block ${widget.index + 1}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w500,
                         fontSize: 14,
+                        color: _isEnabled ? null : Colors.grey,
                       ),
                     ),
                   ],
@@ -208,14 +214,26 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (widget.block.type == BlockType.text)
-                    IconButton(
-                      icon: const Icon(Icons.copy_all, size: 20),
-                      onPressed: widget.onAddVariation,
-                      padding: const EdgeInsets.all(8),
-                      constraints: const BoxConstraints(),
-                      tooltip: 'Add Variation',
-                    ),
+                  // Enable/disable switch
+                  Switch(
+                    value: _isEnabled,
+                    onChanged: (value) {
+                      setState(() {
+                        _isEnabled = value;
+                      });
+                      
+                      // Update the block parameters
+                      final Map<String, dynamic> params = 
+                        Map<String, dynamic>.from(widget.block.parameters ?? {});
+                      params['disabled'] = !value;
+                      
+                      widget.onUpdate(widget.block.copyWith(
+                        parameters: params,
+                      ));
+                    },
+                    activeColor: Theme.of(context).primaryColor,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
                   IconButton(
                     icon: Icon(
                       widget.isCollapsed ? Icons.expand_more : Icons.expand_less,
@@ -252,9 +270,11 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
                     border: InputBorder.none,
                   ),
                   maxLines: null,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
+                    color: _isEnabled ? null : Colors.grey,
+                    decoration: _isEnabled ? null : TextDecoration.lineThrough,
                   ),
                   onChanged: (value) {
                     // Update content and current variation
@@ -320,6 +340,39 @@ class _SimplePromptBlockWidgetState extends State<SimplePromptBlockWidget> {
                       ),
                     );
                   }),
+                  
+                  // Add variation button
+                  InkWell(
+                    onTap: widget.onAddVariation,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.grey[300]!,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.add,
+                            size: 12,
+                            color: Colors.grey[700],
+                          ),
+                          const SizedBox(width: 2),
+                          Text(
+                            'Add',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[700],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),

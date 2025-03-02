@@ -186,6 +186,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 });
               },
             ),
+          if (!_isSearching)
+            IconButton(
+              icon: const Icon(Icons.add),
+              onPressed: _createDataset,
+              tooltip: 'Create Dataset',
+            ),
         ],
       ),
       body: _currentIndex == 0
@@ -195,12 +201,6 @@ class _HomeScreenState extends State<HomeScreen> {
           : _currentIndex == 1
               ? const PromptGeneratorScreen()
               : const SettingsScreen(),
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-              onPressed: _createDataset,
-              child: const Icon(Icons.add),
-            )
-          : null,
     );
   }
 
@@ -211,9 +211,9 @@ class _HomeScreenState extends State<HomeScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
-              Icons.note_alt_outlined,
+              Icons.folder_outlined,
               size: 80,
-              color: Colors.grey[400],
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
             ),
             const SizedBox(height: 16),
             Text(
@@ -222,8 +222,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   : 'No datasets yet\nTap the + button to create one',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 18,
-                color: Colors.grey[600],
+                fontSize: 16,
+                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
               ),
             ),
           ],
@@ -232,29 +232,110 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       itemCount: datasets.length,
       itemBuilder: (context, index) {
         final dataset = datasets[index];
-        return DatasetCard(
-          dataset: dataset,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DatasetEditorScreen(
-                  dataset: dataset,
-                ),
-              ),
-            ).then((result) {
-              if (result == true) {
-                // Refresh datasets if dataset was updated
-                _loadDatasets();
-              }
-            });
-          },
-        );
+        return _buildDatasetItem(dataset);
       },
     );
+  }
+  
+  Widget _buildDatasetItem(DatasetModel dataset) {
+    final theme = Theme.of(context);
+    
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => DatasetEditorScreen(
+              dataset: dataset,
+            ),
+          ),
+        ).then((result) {
+          if (result == true) {
+            _loadDatasets();
+          }
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: theme.dividerTheme.color ?? Colors.grey[200]!,
+              width: 1,
+            ),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              dataset.title,
+              style: theme.textTheme.titleMedium,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              dataset.content,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onBackground.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // Tags
+                if (dataset.tags.isNotEmpty) ...[
+                  Expanded(
+                    child: Wrap(
+                      spacing: 8,
+                      children: dataset.tags.map((tag) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            tag,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ],
+                // Date
+                Text(
+                  _formatDate(dataset.lastUpdated),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.colorScheme.onBackground.withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+  
+  String _formatDate(int timestamp) {
+    final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+    final now = DateTime.now();
+    
+    if (date.year == now.year && date.month == now.month && date.day == now.day) {
+      return 'Today';
+    }
+    
+    return '${date.month.toString().padLeft(2, '0')}/${date.day.toString().padLeft(2, '0')}/${date.year}';
   }
 } 

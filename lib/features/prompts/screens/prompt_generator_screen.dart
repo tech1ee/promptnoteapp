@@ -143,33 +143,43 @@ class _PromptGeneratorScreenState extends State<PromptGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Prompts'),
         elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: _createCustomPrompt,
+            tooltip: 'Create Prompt',
+          ),
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Saved prompts list header
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
+              border: Border(
+                bottom: BorderSide(
+                  color: theme.dividerTheme.color ?? Colors.grey[200]!,
+                  width: 1,
+                ),
+              ),
+            ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Your Prompts',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                TextButton.icon(
-                  icon: const Icon(Icons.add),
-                  label: const Text('Create'),
-                  onPressed: _createCustomPrompt,
-                  style: TextButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -184,94 +194,97 @@ class _PromptGeneratorScreenState extends State<PromptGeneratorScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.format_quote,
+                          Icons.auto_awesome,
                           size: 48,
-                          color: Colors.grey[400],
+                          color: theme.colorScheme.primary.withOpacity(0.3),
                         ),
                         const SizedBox(height: 16),
-                        const Text(
+                        Text(
                           'No saved prompts yet',
                           style: TextStyle(
                             fontSize: 16,
-                            color: Colors.grey,
+                            color: theme.colorScheme.onBackground.withOpacity(0.7),
                           ),
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
+                        ElevatedButton.icon(
                           onPressed: _createCustomPrompt,
-                          child: const Text('Create Your First Prompt'),
+                          icon: const Icon(Icons.add, size: 18),
+                          label: const Text('Create Your First Prompt'),
                         ),
                       ],
                     ),
                   )
                 : ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                    padding: EdgeInsets.zero,
                     itemCount: _savedPrompts.length,
                     itemBuilder: (context, index) {
                       final prompt = _savedPrompts[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8.0),
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: InkWell(
-                          onTap: () => _usePrompt(prompt['content'] as String),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        prompt['title'] as String,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 16,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      height: 36,
-                                      child: Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          IconButton(
-                                            icon: const Icon(Icons.edit, size: 18),
-                                            onPressed: () => _editPrompt(index),
-                                            constraints: const BoxConstraints(),
-                                            padding: const EdgeInsets.all(8),
-                                            visualDensity: VisualDensity.compact,
-                                          ),
-                                          IconButton(
-                                            icon: const Icon(Icons.delete_outline, size: 18),
-                                            onPressed: () => _deletePrompt(index),
-                                            constraints: const BoxConstraints(),
-                                            padding: const EdgeInsets.all(8),
-                                            visualDensity: VisualDensity.compact,
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  prompt['content'] as String,
-                                  maxLines: 2,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    color: Colors.grey[700],
-                                    height: 1.3,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ],
+                      return InkWell(
+                        onTap: () => _usePrompt(prompt['content'] as String),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 14.0),
+                          decoration: BoxDecoration(
+                            border: Border(
+                              bottom: BorderSide(
+                                color: theme.dividerTheme.color ?? Colors.grey[200]!,
+                                width: 1,
+                              ),
                             ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      prompt['title'] as String,
+                                      style: theme.textTheme.titleMedium,
+                                    ),
+                                  ),
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit_outlined, size: 20),
+                                        onPressed: () => _editPrompt(index),
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                        visualDensity: VisualDensity.compact,
+                                        tooltip: 'Edit',
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete_outline, size: 20),
+                                        onPressed: () => _deletePrompt(index),
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                        visualDensity: VisualDensity.compact,
+                                        tooltip: 'Delete',
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.content_copy_outlined, size: 20),
+                                        onPressed: () => _usePrompt(prompt['content'] as String),
+                                        constraints: const BoxConstraints(),
+                                        padding: const EdgeInsets.all(8),
+                                        visualDensity: VisualDensity.compact,
+                                        tooltip: 'Copy',
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                prompt['content'] as String,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onBackground.withOpacity(0.7),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       );

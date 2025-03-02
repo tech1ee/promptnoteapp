@@ -242,15 +242,41 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.initialBlocks == null ? 'Create Prompt' : 'Edit Prompt'),
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            if (_isDirty) {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Discard changes?'),
+                  content: const Text('Your changes will be lost if you leave without saving.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('STAY'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        Navigator.pop(context);
+                      },
+                      child: const Text('DISCARD'),
+                    ),
+                  ],
+                ),
+              );
+            } else {
+              Navigator.pop(context);
+            }
+          },
+        ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.content_copy),
-            onPressed: _copyPromptToClipboard,
-            tooltip: 'Copy',
-          ),
           IconButton(
             icon: const Icon(Icons.check),
             onPressed: _savePrompt,
@@ -258,50 +284,32 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _isAddingBlock = true;
-          });
-        },
-        child: const Icon(Icons.add),
-      ),
       body: Column(
         children: [
           // Title section
           Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Title',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
-                ),
-                TextField(
-                  controller: _titleController,
-                  focusNode: _titleFocusNode,
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    hintText: 'Enter prompt title...',
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.symmetric(vertical: 8.0),
-                    isDense: true,
-                  ),
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  onChanged: (value) {
-                    setState(() {
-                      _isDirty = true;
-                    });
-                  },
-                ),
-              ],
+            child: TextFormField(
+              controller: _titleController,
+              focusNode: _titleFocusNode,
+              autofocus: true,
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              decoration: const InputDecoration(
+                hintText: 'Enter prompt title...',
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _isDirty = true;
+                });
+              },
             ),
           ),
           
@@ -311,15 +319,16 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.colorScheme.surface,
               border: Border(
                 bottom: BorderSide(
-                  color: Colors.grey[200]!,
+                  color: theme.dividerTheme.color ?? Colors.grey[200]!,
                   width: 1,
                 ),
               ),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
                   'Prompt Blocks (${_blocks.length})',
@@ -327,6 +336,18 @@ class _PromptEditorScreenState extends State<PromptEditorScreen> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add, size: 20),
+                  onPressed: () {
+                    setState(() {
+                      _isAddingBlock = true;
+                    });
+                  },
+                  tooltip: 'Add Block',
+                  constraints: const BoxConstraints(),
+                  padding: const EdgeInsets.all(8),
+                  visualDensity: VisualDensity.compact,
                 ),
               ],
             ),

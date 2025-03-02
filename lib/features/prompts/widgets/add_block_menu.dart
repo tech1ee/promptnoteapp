@@ -11,12 +11,12 @@ class AddBlockMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return FloatingActionButton(
+    return IconButton(
+      icon: const Icon(Icons.add),
       onPressed: () {
         _showAddBlockDialog(context);
       },
       tooltip: 'Add Block',
-      child: const Icon(Icons.add),
     );
   }
 
